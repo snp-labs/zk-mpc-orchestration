@@ -1,8 +1,8 @@
 package com.zkrypto.zk_mpc_core.infrastucture.web3j;
 
 import com.zkrypto.zk_mpc_core.application.blockchain.BlockchainPort;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.web3j.crypto.ECDSASignature;
 import org.web3j.crypto.RawTransaction;
@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.math.BigInteger;
 
 @Component
-@RequiredArgsConstructor
 @Slf4j
 public class Web3jService implements BlockchainPort {
     private final Web3j web3j;
@@ -31,7 +30,16 @@ public class Web3jService implements BlockchainPort {
 
     private static final BigInteger gasPrice = BigInteger.valueOf(20_000_000_000L);
     private static final BigInteger gasLimit = BigInteger.valueOf(21_000L);
-    private static final long chainId = 1337;
+
+    private final long chainId;
+
+    public Web3jService(Web3j web3j, TransactionReceiptProcessor receiptProcessor,
+                        @Value("${blockchain.chain-id:31337}") long chainId) {
+        this.web3j = web3j;
+        this.receiptProcessor = receiptProcessor;
+        this.chainId = chainId;
+        log.info("Web3jService initialized with chainId={}", chainId);
+    }
 
     @Override
     public String sendTransaction(byte[] message, String rHex, String sHex, String publicKey, String nonce, String value, String toAddress) {
@@ -48,7 +56,20 @@ public class Web3jService implements BlockchainPort {
         String signedMessage = signTransaction(correctRecId, r, s, rawTransaction);
 
         try {
-            String hash = web3j.ethSendRawTransaction(signedMessage).send().getTransactionHash();
+            EthSendTransaction ethSendTransaction = web3j.ethSendRawTransaction(signedMessage).send();
+
+            if (ethSendTransaction.hasError()) {
+                String errorMsg = ethSendTransaction.getError().getMessage();
+                log.error("ethSendRawTransaction 실패: {}", errorMsg);
+                throw new RuntimeException("트랜잭션 전송 거부: " + errorMsg);
+            }
+
+            String hash = ethSendTransaction.getTransactionHash();
+            if (hash == null) {
+                throw new RuntimeException("트랜잭션 해시가 null입니다. 트랜잭션이 거부되었을 수 있습니다.");
+            }
+
+            log.info("트랜잭션 전송 성공, hash={}", hash);
 
             TransactionReceipt transactionReceipt =
                     receiptProcessor.waitForTransactionReceipt(hash);
