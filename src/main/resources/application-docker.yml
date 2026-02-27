@@ -1,0 +1,16 @@
+# Docker 환경에서 오버라이드되는 설정만
+spring:
+  rabbitmq:
+    host: rabbitmq
+
+  data:
+    redis:
+      host: redis
+
+mpc:
+  api:
+    url: http://api:8080/api/v1
+
+logging:
+  level:
+    root: INFO  # Docker에서는 INFO

@@ -1,24 +1,25 @@
 spring:
   profiles:
-    active: local
+    active: local  # 기본은 로컬
 
   rabbitmq:
     host: localhost
     port: 5672
     username: guest
     password: guest
-    listener:
-      simple:
-        default-requeue-rejected: false
-        concurrency: 3       # 최소 소비자(스레드) 수
-        max-concurrency: 10  # 최대 소비자(스레드) 수
-        prefetch: 1
 
   data:
     redis:
-      address: "http://127.0.0.1:6379"
+      host: localhost
+      port: 6379
+
 server:
   port: 8083
 
+mpc:
+  api:
+    url: http://localhost:8080/api/v1
+
 blockchain:
-  url: http://61.74.32.229:8545
+  url: http://host.docker.internal:8545
+  chain-id: 31337

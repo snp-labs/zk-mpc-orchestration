@@ -6,6 +6,7 @@ import com.zkrypto.zk_mpc_core.infrastucture.mpcRest.dto.response.PublicKeyRespo
 import com.zkrypto.zk_mpc_core.infrastucture.mpcRest.dto.response.TransactionResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;  // 추가
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
@@ -19,7 +20,9 @@ import java.util.HashMap;
 public class MpcRestTemplate implements MpcRestPort {
     private final RestTemplate restTemplate;
 
-    private final String url = "http://localhost:8080/api/v1";
+    // 수정: final 제거, @Value 추가
+    @Value("${mpc.api.url:http://localhost:8080/api/v1}")
+    private String url;
 
     @Override
     public void setAddress(String sid, String publicKey, String address) {
